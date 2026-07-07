@@ -1,4 +1,4 @@
-# EcoSort India - Swachh Waste Segregation AI Agent 🇮🇳
+# EcoSort India - Swachh Waste Segregation AI Agent
 
 ![EcoSort India App Screenshot](screenshot.png)
 
