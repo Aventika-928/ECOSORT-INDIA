@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSort India - Waste Segregation Swachh AI Agent</title>
+    <meta name="description" content="An interactive AI-powered waste segregation assistant aligned with SWM Rules 2016 and Swachh Bharat Mission. Segregate Dry, Wet, Sanitary, and Hazardous waste.">
+    <!-- PWA integration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b4332">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-recycle"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>EcoSort India</h1>
+                    <span>Swachh Bharat Agent</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+                    <i class="fa-solid fa-house-laptop"></i>
+                    <span>Dashboard & AI</span>
+                </button>
+                <button class="nav-item" id="nav-wizard" onclick="switchTab('wizard')">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Contamination Checker</span>
+                </button>
+                <button class="nav-item" id="nav-database" onclick="switchTab('database')">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>City Rules Compare</span>
+                </button>
+                <button class="nav-item" id="nav-ewaste" onclick="switchTab('ewaste')">
+                    <i class="fa-solid fa-battery-quarter"></i>
+                    <span>Domestic Hazardous</span>
+                </button>
+                <button class="nav-item" id="nav-game" onclick="switchTab('game')">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span>Swachh Sorting Game</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="stats-mini-card">
+                    <div class="stat-row">
+                        <span>Sorting Streak:</span>
+                        <span id="streak-count" class="stat-val">0 days</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Swachh Points:</span>
+                        <span id="points-count" class="stat-val">0</span>
+                    </div>
+                </div>
+                <p>&copy; 2026 EcoSort India. Swachh Bharat Abhiyan.</p>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <!-- Offline Status Banner -->
+            <div class="offline-banner hidden" id="offline-banner">
+                <i class="fa-solid fa-wifi-slash"></i> Offline Mode: Accessing cached rules and local database.
+            </div>
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h2 id="tab-title">Swachh AI Waste Assistant</h2>
+                    <p id="tab-subtitle">Ask questions, scan local waste, and practice SWM 2016 guidelines.</p>
+                </div>
+                <div class="header-right">
+                    <div class="impact-meter">
+                        <div class="impact-text">
+                            <span class="impact-label">Dry & Wet Waste Diversion</span>
+                            <span class="impact-percent" id="diversion-rate">100%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="diversion-progress" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable View Area -->
+            <div class="view-viewport">
+                
+                <!-- TAB 1: DASHBOARD & ECOBOT -->
+                <section class="tab-pane active" id="tab-dashboard-content">
+                    <div class="dashboard-grid">
+                        <!-- AI Chat Assistant Panel -->
+                        <div class="card chat-card glass">
+                            <div class="card-header">
+                                <div class="ai-badge">
+                                    <span class="pulse-indicator"></span>
+                                    <span>Swachh Bot Active</span>
+                                </div>
+                                <button class="btn-text" onclick="clearChat()">
+                                    <i class="fa-solid fa-trash-can"></i> Clear Chat
+                                </button>
+                            </div>
+                            <div class="chat-messages" id="chat-box">
+                                <div class="message bot">
+                                    <div class="avatar">
+                                        <i class="fa-solid fa-robot"></i>
+                                    </div>
+                                    <div class="message-bubble">
+                                        <p>Namaste! I am <strong>Swachh Bot</strong>, your segregation assistant. Ask me about Indian waste items (e.g., <em>"tender coconut shell"</em>, <em>"milk packet"</em>, <em>"pooja flowers"</em>, <em>"used diaper"</em>) or click "Scan Waste" to begin!</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-suggestions">
+                                <span class="suggest-label">Try asking:</span>
+                                <button class="suggest-btn" onclick="askItem('Tender coconut shell')">Coconut Shell</button>
+                                <button class="suggest-btn" onclick="askItem('Amul Milk packet')">Milk Packet</button>
+                                <button class="suggest-btn" onclick="askItem('Pooja flowers')">Pooja Flowers</button>
+                                <button class="suggest-btn" onclick="askItem('Used diaper')">Diaper</button>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chat-input" placeholder="Search Maggi wrappers, plastic milk jugs, wet tea leaves..." onkeypress="handleChatKey(event)">
+                                <button class="btn-action primary" onclick="sendChatMessage()">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                                <button class="btn-action secondary scanner-trigger" onclick="openScanner()">
+                                    <i class="fa-solid fa-camera"></i>
+                                    <span>Scan</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- General Segregation Reference Guide -->
+                        <div class="card reference-card glass">
+                            <h3>Solid Waste Segregation Standards (India)</h3>
+                            <p class="section-desc">Quick guide for standard 4-way household sorting containers.</p>
+                            <div class="reference-list">
+                                <div class="ref-item blue">
+                                    <div class="ref-icon"><i class="fa-solid fa-recycle"></i></div>
+                                    <div class="ref-info">
+                                        <h4>Dry Waste (Blue Bin)</h4>
+                                        <p>Rinsed milk packets, clean plastic bottles, cardboard, paper sheets, metal tins, dry glass, and scrap wood.</p>
+                                    </div>
+                                </div>
+                                <div class="ref-item green">
+                                    <div class="ref-icon"><i class="fa-solid fa-seedling"></i></div>
+                                    <div class="ref-info">
+                                        <h4>Wet Waste (Green Bin)</h4>
+                                        <p>Kitchen vegetable scraps, tea leaves, eggshells, pooja flowers, cooked leftovers, and garden leaf trimmings.</p>
+                                    </div>
+                                </div>
+                                <div class="ref-item grey">
+                                    <div class="ref-icon"><i class="fa-solid fa-droplet-slash"></i></div>
+                                    <div class="ref-info">
+                                        <h4>Sanitary Waste (Red Bin / Wrap)</h4>
+                                        <p>Used diapers, sanitary pads, bandages, soiled medical masks, syringes, and clinical waste. Wrap in newspaper marked with a Red cross.</p>
+                                    </div>
+                                </div>
+                                <div class="ref-item orange">
+                                    <div class="ref-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                    <div class="ref-info">
+                                        <h4>Domestic Hazardous & E-Waste (Orange/Black)</h4>
+                                        <p>Discarded tube lights, battery cells, electronic wires, aerosol sprays, mosquito refill containers, and expired tablets.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements, Leaderboard, & Report Section -->
+                    <div class="dashboard-secondary-grid">
+                        <!-- Eco-Impact & Report Card -->
+                        <div class="card impact-report-card glass">
+                            <h3>Swachh Impact Report</h3>
+                            <p class="section-desc">Calculate and download your household waste diversion statement based on segregation logs.</p>
+                            <div class="impact-metrics-row">
+                                <div class="metric-item">
+                                    <span class="m-val" id="co2-val">2.4 kg</span>
+                                    <span class="m-lbl">CO2 Saved</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="m-val" id="water-val">12 L</span>
+                                    <span class="m-lbl">Water Preserved</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="m-val" id="landfill-val">4.5 kg</span>
+                                    <span class="m-lbl">Diverted Waste</span>
+                                </div>
+                            </div>
+                            <button class="btn primary" onclick="generateEcoReport()">
+                                <i class="fa-solid fa-file-arrow-down"></i> Download Swachh Statement
+                            </button>
+                        </div>
+
+                        <!-- Achievements & Leaderboard Card -->
+                        <div class="card achievements-card glass">
+                            <h3>Eco Achievements & Leaderboard</h3>
+                            <p class="section-desc">Unlock badges and benchmark your segregation score against top green societies.</p>
+                            <div class="achievements-content-grid">
+                                <div class="badges-subpanel">
+                                    <h5>Swachh Badges</h5>
+                                    <div class="badges-row" id="badges-container">
+                                        <div class="badge-icon-item locked" id="badge-starter" title="Starter: Classify first item">
+                                            <i class="fa-solid fa-seedling"></i>
+                                            <span>Eco Starter</span>
+                                        </div>
+                                        <div class="badge-icon-item locked" id="badge-streak" title="Streak Master: 3+ Correct answers in a row">
+                                            <i class="fa-solid fa-fire"></i>
+                                            <span>Green Streak</span>
+                                        </div>
+                                        <div class="badge-icon-item locked" id="badge-wizard" title="Wizard: Complete 3 contamination checks">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                            <span>Dry Clean Specialist</span>
+                                        </div>
+                                        <div class="badge-icon-item locked" id="badge-points" title="Super Sorter: Earn 100+ points">
+                                            <i class="fa-solid fa-trophy"></i>
+                                            <span>Swachh Hero</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="leaderboard-subpanel">
+                                    <h5>Top Green Communities</h5>
+                                    <div class="leaderboard-list">
+                                        <div class="leader-row current-user">
+                                            <span class="rank">#4</span>
+                                            <span class="name">You (Novice)</span>
+                                            <span class="score" id="user-leaderboard-score">0 pts</span>
+                                        </div>
+                                        <div class="leader-row">
+                                            <span class="rank">#1</span>
+                                            <span class="name">IndoreCleanSociety_1</span>
+                                            <span class="score">510 pts</span>
+                                        </div>
+                                        <div class="leader-row">
+                                            <span class="rank">#2</span>
+                                            <span class="name">GreenResidentBengaluru</span>
+                                            <span class="score">420 pts</span>
+                                        </div>
+                                        <div class="leader-row">
+                                            <span class="rank">#3</span>
+                                            <span class="name">MumbaiEcoSociety</span>
+                                            <span class="score">310 pts</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Composting Schedule & Advanced Analytics Row -->
+                    <div class="dashboard-tertiary-grid">
+                        <!-- Composting Calendar Card -->
+                        <div class="card calendar-card glass">
+                            <div class="card-header" style="border-bottom: 1px solid var(--color-border); padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-radius: 0;">
+                                <h3><i class="fa-solid fa-calendar-days" style="color: var(--color-accent); margin-right: 8px;"></i> Composting Cycles</h3>
+                                <button class="btn primary" onclick="openCompostModal()" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    <i class="fa-solid fa-plus"></i> New Batch
+                                </button>
+                            </div>
+                            <p class="section-desc">Track organic wet waste composting batches (turning schedules and harvest dates).</p>
+                            
+                            <div class="calendar-layout">
+                                <div class="calendar-widget">
+                                    <div class="calendar-month-header">
+                                        <button class="cal-nav-btn" onclick="prevMonth()"><i class="fa-solid fa-chevron-left"></i></button>
+                                        <span id="calendar-month-year">July 2026</span>
+                                        <button class="cal-nav-btn" onclick="nextMonth()"><i class="fa-solid fa-chevron-right"></i></button>
+                                    </div>
+                                    <div class="calendar-weekdays">
+                                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                                    </div>
+                                    <div class="calendar-days" id="calendar-days-grid">
+                                        <!-- Populated via JS -->
+                                    </div>
+                                </div>
+                                <div class="calendar-schedule-panel">
+                                    <h5>Schedule Details</h5>
+                                    <div class="schedule-list" id="compost-schedule-list">
+                                        <div class="schedule-placeholder">
+                                            <i class="fa-solid fa-hourglass-start"></i>
+                                            <p>No active composting batch. Click "New Batch" to start tracking!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Analytics Chart Card -->
+                        <div class="card analytics-card glass">
+                            <h3><i class="fa-solid fa-chart-line" style="color: var(--color-accent); margin-right: 8px;"></i> Waste Diversion Trends</h3>
+                            <p class="section-desc">Weekly waste stream diversion metrics (in kg) based on user activity.</p>
+                            <div class="analytics-chart-container">
+                                <div class="chart-legend" style="display: flex; gap: 12px; margin-bottom: 12px; font-size: 0.75rem;">
+                                    <span class="legend-item"><span class="color-dot blue" style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#38bdf8; margin-right:4px;"></span> Dry</span>
+                                    <span class="legend-item"><span class="color-dot green" style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#4ade80; margin-right:4px;"></span> Wet</span>
+                                    <span class="legend-item"><span class="color-dot red" style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#f87171; margin-right:4px;"></span> Sanitary</span>
+                                    <span class="legend-item"><span class="color-dot orange" style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#fb923c; margin-right:4px;"></span> Hazard</span>
+                                </div>
+                                <div class="svg-chart-wrapper" id="analytics-svg-wrapper">
+                                    <!-- Rendered dynamically as SVG via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: CONTAMINATION WIZARD -->
+                <section class="tab-pane" id="tab-wizard-content">
+                    <div class="wizard-container card glass">
+                        <div class="wizard-header">
+                            <i class="fa-solid fa-wand-magic-sparkles wizard-icon"></i>
+                            <div class="wizard-title-block">
+                                <h3>Dry Waste Contamination Checker</h3>
+                                <p>Analyze whether your dry recyclables (milk packets, plastic containers) are clean enough or if they require washing first.</p>
+                            </div>
+                        </div>
+
+                        <div class="wizard-grid">
+                            <!-- Input Form -->
+                            <div class="wizard-form">
+                                <div class="form-group">
+                                    <label for="wiz-material" onchange="updateWizardFields()"><i class="fa-solid fa-box-open"></i> 1. Material Category</label>
+                                    <select id="wiz-material" onchange="updateWizardFields()">
+                                        <option value="plastic">Plastic Packet / Tub / Wrapper</option>
+                                        <option value="paper">Cardboard Box / Newspaper / Carton</option>
+                                        <option value="glass">Glass Bottle / Jar</option>
+                                        <option value="metal">Metal Can / Foil container</option>
+                                        <option value="organic">Wet Waste (Kitchen / Pooja leftovers)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="wiz-residue"><i class="fa-solid fa-faucet-drip"></i> 2. Liquid or Food Residue</label>
+                                    <select id="wiz-residue">
+                                        <option value="none">Completely dry & rinsed clean</option>
+                                        <option value="minor">Minor remnants (tiny milk residue, dry crumbs)</option>
+                                        <option value="medium">Sticky food residue (ghee, oil, thick syrup, curry spots)</option>
+                                        <option value="heavy">Heavily soiled (full of leftovers, unrinsed oil packet)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="adhesive-group">
+                                    <label for="wiz-adhesive"><i class="fa-solid fa-tags"></i> 3. Attachments & Sleeves</label>
+                                    <select id="wiz-adhesive">
+                                        <option value="none">No mixed parts or plastic sleeves</option>
+                                        <option value="paper-label">Paper label stuck on glass/plastic</option>
+                                        <option value="plastic-sleeve">Thick plastic sleeves or sealing wraps</option>
+                                        <option value="mixed">Mixed parts (metal pump spray, plastic windows on envelopes)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="prep-group">
+                                    <label for="wiz-prep"><i class="fa-solid fa-hands-wash"></i> 4. Done any pre-sorting wash?</label>
+                                    <div class="checkbox-container">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="wiz-rinsed">
+                                            <span class="checkmark"></span>
+                                            Rinsed with clean water
+                                        </label>
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="wiz-separated">
+                                            <span class="checkmark"></span>
+                                            Separated caps/lids/corks
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button class="btn primary full-width" onclick="calculateContamination()">
+                                    <i class="fa-solid fa-calculator"></i> Calculate Contamination Score
+                                </button>
+                            </div>
+
+                            <!-- Results display -->
+                            <div class="wizard-result-card" id="wizard-result-box">
+                                <div class="result-placeholder">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                    <p>Select options and click calculate to check risk profile before placing in Dry Waste.</p>
+                                </div>
+                                <div class="result-content hidden" id="wiz-result-content">
+                                    <div class="risk-gauge-container">
+                                        <div class="risk-badge" id="wiz-risk-badge">MEDIUM RISK</div>
+                                        <div class="risk-score-display"><span id="wiz-score-num">50</span> / 100</div>
+                                    </div>
+                                    <h4 id="wiz-result-title">Item requires rinsing!</h4>
+                                    <p id="wiz-result-desc">Milk packets or curd cups thrown directly into dry waste rot quickly, causing odors and ruining papers stored alongside them.</p>
+                                    
+                                    <div class="recommendation-box">
+                                        <h5><i class="fa-solid fa-list-check"></i> Action Checklist:</h5>
+                                        <ul id="wiz-steps-list">
+                                            <li>Empty all liquids completely.</li>
+                                            <li>Wash out sticky curry/oil drops.</li>
+                                            <li>Dry before adding to Blue Dry Waste bin.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: REGIONAL RULES -->
+                <section class="tab-pane" id="tab-database-content">
+                    <div class="database-layout">
+                        <!-- Left Panel: Search & City Select -->
+                        <div class="card db-search-card glass">
+                            <h3>Municipal Segregation Lookup</h3>
+                            <p class="section-desc">Solid waste management rules differ slightly across Indian municipal corporations. Select your city and search rules.</p>
+                            
+                            <div class="db-controls">
+                                <div class="form-group">
+                                    <label for="db-city"><i class="fa-solid fa-city"></i> Select City Corporation</label>
+                                    <select id="db-city" onchange="handleCityChange()">
+                                        <option value="bengaluru">Bengaluru, KA (BBMP Rules)</option>
+                                        <option value="mumbai">Mumbai, MH (BMC Rules)</option>
+                                        <option value="indore">Indore, MP (IMC 6-Way Segregation)</option>
+                                        <option value="delhi">Delhi (MCD Rules)</option>
+                                        <option value="chennai">Chennai, TN (GCC Rules)</option>
+                                        <option value="kolkata">Kolkata, WB (KMC Rules)</option>
+                                        <option value="hyderabad">Hyderabad, TG (GHMC Rules)</option>
+                                        <option value="pune">Pune, MH (PMC SWaCH Rules)</option>
+                                        <option value="ahmedabad">Ahmedabad, GJ (AMC Rules)</option>
+                                        <option value="lucknow">Lucknow, UP (LMC Rules)</option>
+                                        <option value="ludhiana">Ludhiana, PB (LMC Rules)</option>
+                                        <option value="amritsar">Amritsar, PB (AMC Rules)</option>
+                                        <option value="jalandhar">Jalandhar, PB (JMC Rules)</option>
+                                        <option value="patiala">Patiala, PB (PMC Rules)</option>
+                                        <option value="bathinda">Bathinda, PB (BMC Rules)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="db-search-input"><i class="fa-solid fa-magnifying-glass"></i> Search Item Name</label>
+                                    <div class="search-input-wrapper">
+                                        <input type="text" id="db-search-input" placeholder="Search coconut shell, milk packet, pooja flowers..." oninput="searchDatabase()">
+                                        <i class="fa-solid fa-times clear-search hidden" id="db-search-clear" onclick="clearDBSearch()"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="city-highlight-box" id="city-info-panel">
+                                <h4 id="city-panel-name">Bengaluru, KA</h4>
+                                <p id="city-panel-desc">BBMP mandates strict 3-way source segregation: Wet, Dry, and Sanitary. Fines are imposed on households and housing societies mixing waste streams.</p>
+                                <div class="city-feature-tags">
+                                    <span class="tag green-tag"><i class="fa-solid fa-check"></i> Wet waste collected daily</span>
+                                    <span class="tag blue-tag"><i class="fa-solid fa-check"></i> Dry Waste twice/week</span>
+                                    <span class="tag red-tag"><i class="fa-solid fa-circle-info"></i> Wrapped Sanitary rules</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Database List Results -->
+                        <div class="card db-results-card glass">
+                            <div class="results-header">
+                                <h3>Material segregation rules (<span id="results-city-name">Bengaluru</span>)</h3>
+                                <span class="badge" id="results-count">Showing All Items</span>
+                            </div>
+                            <div class="db-items-list" id="db-items-container">
+                                <!-- Dynamic items loaded from JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Grid Card -->
+                    <div class="card comparison-card glass" style="margin-top: 32px;">
+                        <h3>Indian City Segregation Comparison Grid</h3>
+                        <p class="section-desc">See side-by-side segregation rules across major Indian corporations to check rules compatibility.</p>
+                        
+                        <div class="comparison-table-wrapper">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Material / Waste Item</th>
+                                        <th>Bengaluru (BBMP)</th>
+                                        <th>Mumbai (BMC)</th>
+                                        <th>Indore (IMC)</th>
+                                        <th>Delhi (MCD)</th>
+                                        <th>Chennai (GCC)</th>
+                                        <th>Kolkata (KMC)</th>
+                                        <th>Hyderabad (GHMC)</th>
+                                        <th>Pune (PMC)</th>
+                                        <th>Ahmedabad (AMC)</th>
+                                        <th>Lucknow (LMC)</th>
+                                        <th>Ludhiana (LMC)</th>
+                                        <th>Amritsar (AMC)</th>
+                                        <th>Jalandhar (JMC)</th>
+                                        <th>Patiala (PMC)</th>
+                                        <th>Bathinda (BMC)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Tender Coconut Shell</strong></td>
+                                        <td><span class="c-rule compost">Wet / Garden</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Biodegradable</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Milk Packet (Unwashed)</strong></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule recycling">Plastic Bin</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pooja Flowers / Nirmalya</strong></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet (Temple bin)</span></td>
+                                        <td><span class="c-rule compost">Wet (Compost)</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Biodegradable</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet (Temple)</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                        <td><span class="c-rule compost">Wet Waste</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Used Diapers & Pads</strong></td>
+                                        <td><span class="c-rule landfill">Sanitary (Red X)</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary (Red bag)</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Non-Recyclable</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary (Red bag)</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                        <td><span class="c-rule landfill">Sanitary</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Multilayer Packaging (Maggi)</strong></td>
+                                        <td><span class="c-rule recycling">Dry (Cement kilns)</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule recycling">Plastic Bin</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Non-Recyclable</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule recycling">Dry Waste</span></td>
+                                        <td><span class="c-rule recycling">Dry Waste</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                        <td><span class="c-rule landfill">Landfill</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 4: HAZARDOUS & E-WASTE -->
+                <section class="tab-pane" id="tab-ewaste-content">
+                    <div class="ewaste-layout">
+                        <!-- Left Panel: Safety Instructions -->
+                        <div class="card ewaste-guide-card glass">
+                            <div class="guide-header">
+                                <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+                                <div>
+                                    <h3>Domestic Hazardous & E-Waste Rules</h3>
+                                    <p>Never hand these over mixed with general dry or wet waste. They cause hazardous toxic leaks and worker injuries.</p>
+                                </div>
+                            </div>
+
+                            <div class="ewaste-grid-items">
+                                <div class="ewaste-item">
+                                    <div class="ewaste-icon"><i class="fa-solid fa-car-battery"></i></div>
+                                    <div class="ewaste-details">
+                                        <h5>Batteries & Lead Accumulators</h5>
+                                        <p><strong>Risk:</strong> Causes garbage truck fires, leaks heavy acid toxins.</p>
+                                        <p class="action-tip"><strong>Solution:</strong> Store dry. Hand over separate to local electronic dealers or city e-waste center.</p>
+                                    </div>
+                                </div>
+                                <div class="ewaste-item">
+                                    <div class="ewaste-icon"><i class="fa-solid fa-spray-can"></i></div>
+                                    <div class="ewaste-details">
+                                        <h5>Mosquito Refills / Spray Cans</h5>
+                                        <p><strong>Risk:</strong> Vaporizer refills contain toxic chemicals (transfluthrin) and aerosol cans risk explosion.</p>
+                                        <p class="action-tip"><strong>Solution:</strong> Seal empty refill bottles in a bag. Send to HHW collection hubs.</p>
+                                    </div>
+                                </div>
+                                <div class="ewaste-item">
+                                    <div class="ewaste-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                                    <div class="ewaste-details">
+                                        <h5>Tube lights & CFL bulbs</h5>
+                                        <p><strong>Risk:</strong> CFLs contain toxic mercury vapor.</p>
+                                        <p class="action-tip"><strong>Solution:</strong> Wrap broken glass parts in cardboard; hand over to sanitation workers separately.</p>
+                                    </div>
+                                </div>
+                                <div class="ewaste-item">
+                                    <div class="ewaste-icon"><i class="fa-solid fa-laptop"></i></div>
+                                    <div class="ewaste-details">
+                                        <h5>Expired Medicines & Drugs</h5>
+                                        <p><strong>Risk:</strong> Poisonous to environment and water supply when flushed.</p>
+                                        <p class="action-tip"><strong>Solution:</strong> Wrap inside paper marked with black tape, return to pharmacy take-back spots.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Drop-off Locator Map Simulator -->
+                        <div class="card locator-card glass">
+                            <h3>Swachh Collection Hub Locator</h3>
+                            <p class="section-desc">Find BBMP Dry Waste Collection Centers (DWCC), MCD hazardous collection centers, or BMC local e-waste camps.</p>
+                            
+                            <div class="locator-search">
+                                <input type="text" id="locator-zip" placeholder="Enter Pincode (e.g. 560001, 400001, 110001)" value="560001">
+                                <button class="btn primary" onclick="simulateLocator()">Search Hubs</button>
+                            </div>
+
+                            <div class="locator-results-grid">
+                                <!-- Map container mockup -->
+                                <div class="map-mockup">
+                                    <div class="map-pin pin-1" id="pin-1" onclick="focusLocatorCenter(0)">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <span class="pin-tooltip">BBMP Ward DWCC (Dry/E-waste)</span>
+                                    </div>
+                                    <div class="map-pin pin-2" id="pin-2" onclick="focusLocatorCenter(1)">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <span class="pin-tooltip">E-Cycle India Hub</span>
+                                    </div>
+                                    <div class="map-pin pin-3" id="pin-3" onclick="focusLocatorCenter(2)">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <span class="pin-tooltip">Municipal Hazardous Center</span>
+                                    </div>
+                                    <div class="map-compass"><i class="fa-solid fa-compass"></i></div>
+                                    <div class="map-zoom"><i class="fa-solid fa-plus"></i><hr><i class="fa-solid fa-minus"></i></div>
+                                </div>
+
+                                <!-- Text locations list -->
+                                <div class="locations-list" id="locations-list-container">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 5: GAME -->
+                <section class="tab-pane" id="tab-game-content">
+                    <div class="game-container card glass">
+                        <div class="game-header">
+                            <div class="game-info-bar">
+                                <div class="info-block">
+                                    <span class="info-lbl">SCORE</span>
+                                    <span class="info-val" id="game-score">0</span>
+                                </div>
+                                <div class="info-block">
+                                    <span class="info-lbl">STREAK</span>
+                                    <span class="info-val" id="game-streak">0 🔥</span>
+                                </div>
+                                <div class="info-block">
+                                    <span class="info-lbl">HIGH SCORE</span>
+                                    <span class="info-val" id="game-high-score">0</span>
+                                </div>
+                            </div>
+                            <button class="btn-text" onclick="resetGameScores()">
+                                <i class="fa-solid fa-rotate-left"></i> Reset Game
+                            </button>
+                        </div>
+
+                        <!-- Game Playing Screen -->
+                        <div class="game-arena">
+                            <div class="feedback-overlay hidden" id="game-feedback-overlay">
+                                <div class="feedback-content" id="game-feedback-content">
+                                    <i class="fa-solid fa-circle-check feedback-icon success"></i>
+                                    <h4 id="feedback-result-title">Correct!</h4>
+                                    <p id="feedback-explanation">Explanation text goes here...</p>
+                                    <button class="btn primary" onclick="nextGameItem()">Next Waste Item <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="game-item-display" id="game-card">
+                                <div class="card-item-tag" id="game-item-material">Plastic</div>
+                                <div class="card-item-graphic">
+                                    <i class="fa-solid fa-wine-glass" id="game-item-icon"></i>
+                                </div>
+                                <h3 id="game-item-name">Yogurt Container</h3>
+                                <p id="game-item-description">Made from rigid polypropylene (#5 plastic). Leftover sticky cherry fruit residue at the bottom.</p>
+                                <span class="drag-hint"><i class="fa-solid fa-arrow-pointer"></i> Click correct bin below to sort</span>
+                            </div>
+                        </div>
+
+                        <!-- Game Bins buttons -->
+                        <div class="game-bins-rack">
+                            <button class="game-bin-btn blue-bin" onclick="selectGameBin('recycling')">
+                                <i class="fa-solid fa-recycle"></i>
+                                <span>Dry Waste</span>
+                            </button>
+                            <button class="game-bin-btn green-bin" onclick="selectGameBin('compost')">
+                                <i class="fa-solid fa-seedling"></i>
+                                <span>Wet Waste</span>
+                            </button>
+                            <button class="game-bin-btn grey-bin" onclick="selectGameBin('landfill')">
+                                <i class="fa-solid fa-droplet-slash"></i>
+                                <span>Sanitary Waste</span>
+                            </button>
+                            <button class="game-bin-btn orange-bin" onclick="selectGameBin('hazardous')">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span>Hazardous/E-Waste</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MOCK SCANNER SCREEN OVERLAY -->
+    <div class="modal-overlay hidden" id="scanner-modal">
+        <div class="modal-card scanner-modal-card glass">
+            <div class="scanner-header">
+                <h3>Swachh AI Visual Scanner</h3>
+                <button class="btn-close" onclick="closeScanner()">&times;</button>
+            </div>
+            <div class="scanner-viewfinder">
+                <img id="uploaded-image-preview" class="hidden" style="position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; border-radius: 0;">
+                <div class="scanning-laser" style="z-index: 3;"></div>
+                <div class="focus-corners" style="z-index: 4;">
+                    <span class="corner tl"></span>
+                    <span class="corner tr"></span>
+                    <span class="corner bl"></span>
+                    <span class="corner br"></span>
+                </div>
+                
+                <!-- Mock Video Stream -->
+                <div class="mock-stream-content" style="position: relative; z-index: 2;">
+                    <i class="fa-solid fa-camera-retro stream-fallback-icon"></i>
+                    <p id="scanner-status-text">Camera stream initializing...</p>
+                    <div id="scanned-item-preview" class="hidden">
+                        <i class="fa-solid fa-bottle-water preview-icon"></i>
+                        <span id="preview-label">Detecting...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scanner-footer">
+                <div class="scanner-actions">
+                    <button class="btn secondary" id="btn-camera-select" onclick="triggerScannerCapture()">
+                        <i class="fa-solid fa-circle-dot"></i> Capture Demo
+                    </button>
+                    <button class="btn secondary" onclick="document.getElementById('scanner-file-input').click()">
+                        <i class="fa-solid fa-upload"></i> Upload Photo
+                    </button>
+                    <button class="btn outline" onclick="cycleScannerSubject()">
+                        <i class="fa-solid fa-rotate"></i> Cycle Demo
+                    </button>
+                </div>
+                <input type="file" id="scanner-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                <p class="helper-text">Simulates visual AI classification. Cycle mock targets, or upload a real waste photo!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOCK COMPOSTING MODAL -->
+    <div class="modal-overlay hidden" id="compost-modal">
+        <div class="modal-card compost-modal-card glass" style="padding: 24px;">
+            <div class="card-header" style="border-bottom: 1px solid var(--color-border); padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-radius:0;">
+                <h3>Start Composting Batch</h3>
+                <button class="btn-close" onclick="closeCompostModal()">&times;</button>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="compost-batch-name" style="font-size:0.85rem; font-weight:500; color:var(--color-text-secondary); margin-bottom:6px;">Batch Name / Container ID</label>
+                <input type="text" id="compost-batch-name" placeholder="e.g. Kitchen Bin A, Balcony Pot" value="Kitchen Bin 1" style="background: rgba(15,23,42,0.6); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: 12px; color: white; width:100%; outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="compost-start-date" style="font-size:0.85rem; font-weight:500; color:var(--color-text-secondary); margin-bottom:6px;">Start Date</label>
+                <input type="date" id="compost-start-date" style="background: rgba(15,23,42,0.6); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: 12px; color: white; width:100%; outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="compost-method" style="font-size:0.85rem; font-weight:500; color:var(--color-text-secondary); margin-bottom:6px;">Composting Method</label>
+                <select id="compost-method" style="background: rgba(15,23,42,0.6); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: 12px; color: white; width:100%; cursor:pointer; outline:none;">
+                    <option value="aerobic">Aerobic Bin Composting (30 Days)</option>
+                    <option value="bokashi">Bokashi Kitchen Composting (21 Days)</option>
+                    <option value="backyard">Backyard Pit / Pile (60 Days)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn primary" onclick="saveNewCompostBatch()" style="flex-grow: 1;">Start Batch</button>
+                <button class="btn outline" onclick="closeCompostModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
