@@ -12,3 +12,8 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 .DS_Store
+
+# Ignore application source files
+app.js
+styles.css
+style.css
