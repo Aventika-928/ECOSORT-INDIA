@@ -1,5 +1,7 @@
 # EcoSort India - Swachh Waste Segregation AI Agent 🇮🇳
 
+![EcoSort India App Screenshot](screenshot.png)
+
 An interactive, responsive, and mobile-friendly web application designed to support the **Swachh Bharat Mission** and align with the **Solid Waste Management (SWM) Rules 2016**. EcoSort India guides sanitation workers, housing societies, and households in proper 4-way waste segregation, regional municipal compliance, and localized composting.
 
 ---
