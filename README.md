@@ -47,7 +47,8 @@ graph TD
     D --> D1{Is Contaminated?}
     D1 -->|Yes| D2[Wizard: Rinse & Dry]
     D1 -->|No| D3[Recycle / Kabadiwala]
-    E --> E1[Wrap in Newspaper with Red X] --> E2[Sanitary Incineration]
+    E --> E1[Wrap in Newspaper with Red X]
+    E1 --> E2[Sanitary Incineration]
     F --> F1[HHW Drop-off Center]
 ```
 
@@ -63,7 +64,9 @@ graph TD
     C -->|Minor / Sticky| E{Can it be Rinsed?}
     C -->|Heavy / Soiled| F{Is it Cardboard/Paper?}
     
-    E -->|Yes| G[Rinse with water & Let Dry] --> D
+    E -->|Yes| G[Rinse with water & Let Dry]
+    G --> D
+    
     E -->|No| H[Medium Risk: Reject to Landfill]
     
     F -->|Yes| I[Convert to Compost / Wet Bin]
@@ -82,7 +85,7 @@ gantt
     Turn 1 (Aeration)     :milestone, 2026-07-08, 1d
     Turn 2 (Aeration)     :milestone, 2026-07-15, 1d
     Turn 3 (Aeration)     :milestone, 2026-07-22, 1d
-    Harvest Compost       :success, milestone, 2026-07-31, 1d
+    Harvest Compost       :done, milestone, 2026-07-31, 1d
 ```
 
 ---
